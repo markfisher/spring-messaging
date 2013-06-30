@@ -1,0 +1,54 @@
+description = 'Spring Messaging'
+
+apply plugin: 'base'
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+apply plugin: 'java'
+
+repositories {
+	maven { url 'http://repo.springsource.org/libs-milestone' }
+}
+
+sourceCompatibility=1.6
+targetCompatibility=1.6
+
+ext {
+	junitVersion = '4.11'
+	hamcrestVersion = '1.3'
+	springVersion = '3.2.2.RELEASE'
+	springIntegrationVersion = '3.0.0.M2'
+}
+
+eclipse {
+	project {
+		natures += 'org.springframework.ide.eclipse.core.springnature'
+	}
+}
+
+sourceSets {
+	test {
+		resources {
+			srcDirs = ['src/test/resources', 'src/test/java']
+		}
+	}
+}
+
+dependencies {
+	compile "org.springframework:spring-core:$springVersion"
+	compile "org.springframework.integration:spring-integration-core:$springIntegrationVersion"
+	testCompile "junit:junit:$junitVersion"
+	testCompile "org.hamcrest:hamcrest-library:$hamcrestVersion"
+}
+
+// enable all compiler warnings; individual projects may customize further
+[compileJava, compileTestJava]*.options*.compilerArgs = ["-Xlint:all"]
+
+test {
+	// suppress all console output during testing unless running `gradle -i`
+	logging.captureStandardOutput(LogLevel.INFO)
+}
+
+task wrapper(type: Wrapper) {
+	description = "Generates gradlew[.bat] scripts"
+	gradleVersion = "1.6"
+}
