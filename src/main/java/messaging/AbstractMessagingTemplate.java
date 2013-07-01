@@ -1,50 +1,76 @@
 package messaging;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.integration.Message;
 import org.springframework.integration.MessagingException;
 import org.springframework.integration.core.MessagePostProcessor;
+import org.springframework.integration.support.converter.SimpleMessageConverter;
+import org.springframework.util.Assert;
 
-public abstract class AbstractMessagingTemplate implements MessageSendingOperations {
+public abstract class AbstractMessagingTemplate implements MessageReceivingOperations {
+
+	protected final Log logger = LogFactory.getLog(this.getClass());
 
 	private volatile String defaultDestinationName;
 
 	protected volatile MessageConverter converter = new DefaultMessageConverter();
 
+
 	public void setDefaultDestinationName(String defaultDestinationName) {
 		this.defaultDestinationName = defaultDestinationName;
 	}
 
-	public void setMessageConverter(MessageConverter converter) {
-		this.converter = converter;
+	/**
+	 * Set the {@link MessageConverter} that is to be used to convert
+	 * between Messages and objects for this template.
+	 * <p>The default is {@link SimpleMessageConverter}.
+	 */
+	public void setMessageConverter(MessageConverter messageConverter) {
+		Assert.notNull(messageConverter, "'messageConverter' must not be null");
+		this.converter = messageConverter;
+	}
+
+
+	@Override
+	public <P> void send(Message<P> message) {
+		this.send(getRequiredDefaultDestination(), message);
+	}
+
+	private String getRequiredDefaultDestination() {
+		Assert.state(this.defaultDestinationName != null,
+				"No 'defaultDestinationName' specified for MessagingTemplate. "
+				+ "Unable to invoke method without an explicit destination argument.");
+		return this.defaultDestinationName;
 	}
 
 	@Override
-	public <P> void send(Message<P> message) throws MessagingException {
-		this.send(this.defaultDestinationName, message);
-	}
-
-	@Override
-	public <P> void send(String destinationName, Message<P> message) throws MessagingException {
+	public <P> void send(String destinationName, Message<P> message) {
 		this.doSend(destinationName, message);
 	}
 
+	protected abstract void doSend(String destinationName, Message<?> message) ;
+
+
 	@Override
-	public <T> void convertAndSend(T message) throws MessagingException {
-		this.convertAndSend(this.defaultDestinationName, message);
+	public <T> void convertAndSend(T message) {
+		this.convertAndSend(getRequiredDefaultDestination(), message);
 	}
 
 	@Override
-	public <T> void convertAndSend(String destinationName, T object) throws MessagingException {
+	public <T> void convertAndSend(String destinationName, T object) {
 		this.convertAndSend(destinationName, object, null);
 	}
 
 	@Override
-	public <T> void convertAndSend(T object, MessagePostProcessor postProcessor) throws MessagingException {
-		this.convertAndSend(this.defaultDestinationName, object, postProcessor);
+	public <T> void convertAndSend(T object, MessagePostProcessor postProcessor) {
+		this.convertAndSend(getRequiredDefaultDestination(), object, postProcessor);
 	}
 
 	@Override
-	public <T> void convertAndSend(String destinationName, T object, MessagePostProcessor postProcessor) throws MessagingException {
+	public <T> void convertAndSend(String destinationName, T object, MessagePostProcessor postProcessor)
+			throws MessagingException {
+
 		Message<?> message = this.converter.toMessage(object);
 		if (postProcessor != null) {
 			message = postProcessor.postProcessMessage(message);
@@ -52,6 +78,68 @@ public abstract class AbstractMessagingTemplate implements MessageSendingOperati
 		this.send(destinationName, message);
 	}
 
-	protected abstract void doSend(String destinationName, Message<?> message);
+
+	@Override
+	public <P> Message<P> receive() {
+		return this.receive(getRequiredDefaultDestination());
+	}
+
+	@Override
+	public <P> Message<P> receive(String destinationName) {
+		return this.doReceive(destinationName);
+	}
+
+	protected abstract <P> Message<P> doReceive(String destinationName);
+
+
+	@Override
+	public Object receiveAndConvert() {
+		return this.receiveAndConvert(getRequiredDefaultDestination());
+	}
+
+	@Override
+	public Object receiveAndConvert(String destinationName) {
+		Message<Object> message = this.doReceive(destinationName);
+		return (message != null) ? this.converter.fromMessage(message) : null;
+	}
+
+
+	@Override
+	public Message<?> sendAndReceive(Message<?> requestMessage) {
+		return this.sendAndReceive(getRequiredDefaultDestination(), requestMessage);
+	}
+
+	@Override
+	public Message<?> sendAndReceive(String destinationName, Message<?> requestMessage) {
+		return this.doSendAndReceive(destinationName, requestMessage);
+	}
+
+	protected abstract <S, R> Message<R> doSendAndReceive(String destinationName, Message<S> requestMessage);
+
+
+	@Override
+	public Object convertSendAndReceive(Object request) {
+		return this.convertSendAndReceive(getRequiredDefaultDestination(), request);
+	}
+
+	@Override
+	public Object convertSendAndReceive(String destinationName, Object request) {
+		Message<?> requestMessage = this.converter.toMessage(request);
+		Message<?> replyMessage = this.sendAndReceive(destinationName, requestMessage);
+		return this.converter.fromMessage(replyMessage);
+	}
+
+	@Override
+	public Object convertSendAndReceive(Object request, MessagePostProcessor postProcessor) {
+		return this.convertSendAndReceive(getRequiredDefaultDestination(), request, postProcessor);
+	}
+
+	@Override
+	public Object convertSendAndReceive(String destinationName, Object request, MessagePostProcessor postProcessor) {
+		Message<?> requestMessage = this.converter.toMessage(request);
+		requestMessage = postProcessor.postProcessMessage(requestMessage);
+		Message<?> replyMessage = this.sendAndReceive(destinationName, requestMessage);
+		return this.converter.fromMessage(replyMessage);
+	}
 
 }

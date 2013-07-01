@@ -1,9 +1,15 @@
 package messaging;
 
 import org.springframework.integration.Message;
+import org.springframework.integration.MessagingException;
 import org.springframework.integration.core.MessagePostProcessor;
 
-public interface MessageDestinationExchangingOperations<D> extends MessageExchangingOperations {
+public interface ResolvableDestinationMessageReceivingOperations<D>
+		extends MessageReceivingOperations, ResolvableDestinationMessageSendingOperations<D> {
+
+	<P> Message<P> receive(D destination) throws MessagingException;
+
+	Object receiveAndConvert(D destination) throws MessagingException;
 
 	Message<?> sendAndReceive(D destination, Message<?> requestMessage);
 
