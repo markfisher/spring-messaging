@@ -3,7 +3,7 @@ package messaging;
 import org.springframework.integration.Message;
 import org.springframework.integration.MessagingException;
 
-public interface MessageDestinationReceivingOperations<D> extends MessageSendingOperations {
+public interface MessageDestinationReceivingOperations<D> extends MessageReceivingOperations {
 
 	<P> Message<P> receive(D destination) throws MessagingException;
 
