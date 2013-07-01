@@ -5,7 +5,8 @@ import org.springframework.integration.MessagingException;
 import org.springframework.integration.core.MessagePostProcessor;
 import org.springframework.util.Assert;
 
-public abstract class AbstractDestinationResolvingMessagingTemplate<D> extends AbstractMessagingTemplate {
+public abstract class AbstractDestinationResolvingMessagingTemplate<D> extends AbstractMessagingTemplate
+		implements MessageDestinationSendingOperations<D> {
 
 	private volatile DestinationResolver<D> destinationResolver;
 
