@@ -4,7 +4,7 @@ import org.springframework.integration.Message;
 import org.springframework.integration.MessagingException;
 import org.springframework.integration.core.MessagePostProcessor;
 
-public interface MessageReceivingOperations {
+public interface MessageReceivingOperations extends MessageSendingOperations {
 
 	<P> Message<P> receive() throws MessagingException;
 
