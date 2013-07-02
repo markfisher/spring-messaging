@@ -4,7 +4,7 @@ import org.springframework.integration.Message;
 import org.springframework.integration.MessagingException;
 import org.springframework.integration.core.MessagePostProcessor;
 
-public interface MessageDestinationSendingOperations<D> extends MessageSendingOperations {
+public interface ResolvableDestinationMessageSendingOperations<D> extends MessageSendingOperations {
 
 	<P> void send(D destination, Message<P> message) throws MessagingException;
 
