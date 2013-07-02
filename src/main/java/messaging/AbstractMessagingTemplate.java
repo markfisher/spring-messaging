@@ -2,10 +2,10 @@ package messaging;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.springframework.integration.Message;
 import org.springframework.integration.MessagingException;
 import org.springframework.integration.core.MessagePostProcessor;
-import org.springframework.integration.support.converter.SimpleMessageConverter;
 import org.springframework.util.Assert;
 
 public abstract class AbstractMessagingTemplate implements MessageReceivingOperations {
@@ -24,7 +24,7 @@ public abstract class AbstractMessagingTemplate implements MessageReceivingOpera
 	/**
 	 * Set the {@link MessageConverter} that is to be used to convert
 	 * between Messages and objects for this template.
-	 * <p>The default is {@link SimpleMessageConverter}.
+	 * <p>The default is {@link DefaultMessageConverter}.
 	 */
 	public void setMessageConverter(MessageConverter messageConverter) {
 		Assert.notNull(messageConverter, "'messageConverter' must not be null");
@@ -124,9 +124,7 @@ public abstract class AbstractMessagingTemplate implements MessageReceivingOpera
 
 	@Override
 	public Object convertSendAndReceive(String destinationName, Object request) {
-		Message<?> requestMessage = this.converter.toMessage(request);
-		Message<?> replyMessage = this.sendAndReceive(destinationName, requestMessage);
-		return this.converter.fromMessage(replyMessage);
+		return this.convertSendAndReceive(destinationName, request, null);
 	}
 
 	@Override
@@ -137,7 +135,9 @@ public abstract class AbstractMessagingTemplate implements MessageReceivingOpera
 	@Override
 	public Object convertSendAndReceive(String destinationName, Object request, MessagePostProcessor postProcessor) {
 		Message<?> requestMessage = this.converter.toMessage(request);
-		requestMessage = postProcessor.postProcessMessage(requestMessage);
+		if (postProcessor != null) {
+			requestMessage = postProcessor.postProcessMessage(requestMessage);
+		}
 		Message<?> replyMessage = this.sendAndReceive(destinationName, requestMessage);
 		return this.converter.fromMessage(replyMessage);
 	}

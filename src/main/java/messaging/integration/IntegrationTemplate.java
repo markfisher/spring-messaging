@@ -7,6 +7,7 @@ import messaging.AbstractDestinationResolvingMessagingTemplate;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -65,7 +66,7 @@ public class IntegrationTemplate extends AbstractDestinationResolvingMessagingTe
 
 
 	@Override
-	protected void doSend(MessageChannel destination, Message<?> message) {
+	protected final void doSend(MessageChannel destination, Message<?> message) {
 		Assert.notNull(destination, "channel must not be null");
 		long timeout = this.sendTimeout;
 		boolean sent = (timeout >= 0)
@@ -79,7 +80,7 @@ public class IntegrationTemplate extends AbstractDestinationResolvingMessagingTe
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected <P> Message<P> doReceive(MessageChannel destination) {
+	protected final <P> Message<P> doReceive(MessageChannel destination) {
 		Assert.state(destination instanceof PollableChannel,
 				"The 'destination' must be a PollableChannel for receive operations.");
 
@@ -95,7 +96,7 @@ public class IntegrationTemplate extends AbstractDestinationResolvingMessagingTe
 	}
 
 	@Override
-	protected <S, R> Message<R> doSendAndReceive(MessageChannel destination, Message<S> requestMessage) {
+	protected final <S, R> Message<R> doSendAndReceive(MessageChannel destination, Message<S> requestMessage) {
 		Object originalReplyChannelHeader = requestMessage.getHeaders().getReplyChannel();
 		Object originalErrorChannelHeader = requestMessage.getHeaders().getErrorChannel();
 		TemporaryReplyChannel replyChannel = new TemporaryReplyChannel(this.receiveTimeout, this.throwExceptionOnLateReply);
@@ -150,10 +151,12 @@ public class IntegrationTemplate extends AbstractDestinationResolvingMessagingTe
 		}
 
 
+		@Override
 		public Message<?> receive() {
 			return this.receive(-1);
 		}
 
+		@Override
 		public Message<?> receive(long timeout) {
 			try {
 				if (this.receiveTimeout < 0) {
@@ -175,10 +178,12 @@ public class IntegrationTemplate extends AbstractDestinationResolvingMessagingTe
 			return this.message;
 		}
 
+		@Override
 		public boolean send(Message<?> message) {
 			return this.send(message, -1);
 		}
 
+		@Override
 		public boolean send(Message<?> message, long timeout) {
 			this.message = message;
 			this.latch.countDown();

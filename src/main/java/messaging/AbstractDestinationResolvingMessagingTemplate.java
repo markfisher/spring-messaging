@@ -27,13 +27,13 @@ public abstract class AbstractDestinationResolvingMessagingTemplate<D> extends A
 	}
 
 	@Override
-	protected <P> Message<P> doReceive(String destinationName) {
+	protected final <P> Message<P> doReceive(String destinationName) {
 		D destination = resolveDestination(destinationName);
 		return this.doReceive(destination);
 	}
 
 	@Override
-	protected <S, R> Message<R> doSendAndReceive(String destinationName, Message<S> requestMessage) {
+	protected final <S, R> Message<R> doSendAndReceive(String destinationName, Message<S> requestMessage) {
 		D destination = resolveDestination(destinationName);
 		return this.doSendAndReceive(destination, requestMessage);
 	}
@@ -85,15 +85,15 @@ public abstract class AbstractDestinationResolvingMessagingTemplate<D> extends A
 
 	@Override
 	public Object convertSendAndReceive(D destination, Object request) {
-		Message<?> requestMessage = this.converter.toMessage(request);
-		Message<?> replyMessage = this.sendAndReceive(requestMessage);
-		return this.converter.fromMessage(replyMessage);
+		return this.convertSendAndReceive(destination, request, null);
 	}
 
 	@Override
 	public Object convertSendAndReceive(D destination, Object request, MessagePostProcessor postProcessor) {
 		Message<?> requestMessage = this.converter.toMessage(request);
-		requestMessage = postProcessor.postProcessMessage(requestMessage);
+		if (postProcessor != null) {
+			requestMessage = postProcessor.postProcessMessage(requestMessage);
+		}
 		Message<?> replyMessage = this.sendAndReceive(destination, requestMessage);
 		return this.converter.fromMessage(replyMessage);
 	}
