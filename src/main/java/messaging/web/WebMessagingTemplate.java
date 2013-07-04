@@ -11,7 +11,7 @@ import org.springframework.integration.support.converter.SimpleMessageConverter;
 import org.springframework.util.Assert;
 
 
-public class WebMessagingTemplate implements MessageSendingOperations {
+public class WebMessagingTemplate implements MessageSendingOperations<String> {
 
 	private final MessageChannel outputChannel;
 

@@ -2,23 +2,22 @@ package messaging;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.integration.Message;
 import org.springframework.integration.MessagingException;
 import org.springframework.integration.core.MessagePostProcessor;
 import org.springframework.util.Assert;
 
-public abstract class AbstractMessagingTemplate implements MessageReceivingOperations {
+public abstract class AbstractMessagingTemplate<D> implements MessageReceivingOperations<D> {
 
 	protected final Log logger = LogFactory.getLog(this.getClass());
 
-	private volatile String defaultDestinationName;
+	private volatile D defaultDestination;
 
 	protected volatile MessageConverter converter = new DefaultMessageConverter();
 
 
-	public void setDefaultDestinationName(String defaultDestinationName) {
-		this.defaultDestinationName = defaultDestinationName;
+	public void setDefaultDestination(D defaultDestination) {
+		this.defaultDestination = defaultDestination;
 	}
 
 	/**
@@ -37,19 +36,19 @@ public abstract class AbstractMessagingTemplate implements MessageReceivingOpera
 		this.send(getRequiredDefaultDestination(), message);
 	}
 
-	private String getRequiredDefaultDestination() {
-		Assert.state(this.defaultDestinationName != null,
-				"No 'defaultDestinationName' specified for MessagingTemplate. "
+	private D getRequiredDefaultDestination() {
+		Assert.state(this.defaultDestination != null,
+				"No 'defaultDestination' specified for MessagingTemplate. "
 				+ "Unable to invoke method without an explicit destination argument.");
-		return this.defaultDestinationName;
+		return this.defaultDestination;
 	}
 
 	@Override
-	public <P> void send(String destinationName, Message<P> message) {
-		this.doSend(destinationName, message);
+	public <P> void send(D destination, Message<P> message) {
+		this.doSend(destination, message);
 	}
 
-	protected abstract void doSend(String destinationName, Message<?> message) ;
+	protected abstract void doSend(D destination, Message<?> message) ;
 
 
 	@Override
@@ -58,8 +57,8 @@ public abstract class AbstractMessagingTemplate implements MessageReceivingOpera
 	}
 
 	@Override
-	public <T> void convertAndSend(String destinationName, T object) {
-		this.convertAndSend(destinationName, object, null);
+	public <T> void convertAndSend(D destination, T object) {
+		this.convertAndSend(destination, object, null);
 	}
 
 	@Override
@@ -68,14 +67,14 @@ public abstract class AbstractMessagingTemplate implements MessageReceivingOpera
 	}
 
 	@Override
-	public <T> void convertAndSend(String destinationName, T object, MessagePostProcessor postProcessor)
+	public <T> void convertAndSend(D destination, T object, MessagePostProcessor postProcessor)
 			throws MessagingException {
 
 		Message<?> message = this.converter.toMessage(object);
 		if (postProcessor != null) {
 			message = postProcessor.postProcessMessage(message);
 		}
-		this.send(destinationName, message);
+		this.send(destination, message);
 	}
 
 
@@ -85,11 +84,11 @@ public abstract class AbstractMessagingTemplate implements MessageReceivingOpera
 	}
 
 	@Override
-	public <P> Message<P> receive(String destinationName) {
-		return this.doReceive(destinationName);
+	public <P> Message<P> receive(D destination) {
+		return this.doReceive(destination);
 	}
 
-	protected abstract <P> Message<P> doReceive(String destinationName);
+	protected abstract <P> Message<P> doReceive(D destination);
 
 
 	@Override
@@ -98,8 +97,8 @@ public abstract class AbstractMessagingTemplate implements MessageReceivingOpera
 	}
 
 	@Override
-	public Object receiveAndConvert(String destinationName) {
-		Message<Object> message = this.doReceive(destinationName);
+	public Object receiveAndConvert(D destination) {
+		Message<Object> message = this.doReceive(destination);
 		return (message != null) ? this.converter.fromMessage(message) : null;
 	}
 
@@ -110,11 +109,11 @@ public abstract class AbstractMessagingTemplate implements MessageReceivingOpera
 	}
 
 	@Override
-	public Message<?> sendAndReceive(String destinationName, Message<?> requestMessage) {
-		return this.doSendAndReceive(destinationName, requestMessage);
+	public Message<?> sendAndReceive(D destination, Message<?> requestMessage) {
+		return this.doSendAndReceive(destination, requestMessage);
 	}
 
-	protected abstract <S, R> Message<R> doSendAndReceive(String destinationName, Message<S> requestMessage);
+	protected abstract <S, R> Message<R> doSendAndReceive(D destination, Message<S> requestMessage);
 
 
 	@Override
@@ -123,8 +122,8 @@ public abstract class AbstractMessagingTemplate implements MessageReceivingOpera
 	}
 
 	@Override
-	public Object convertSendAndReceive(String destinationName, Object request) {
-		return this.convertSendAndReceive(destinationName, request, null);
+	public Object convertSendAndReceive(D destination, Object request) {
+		return this.convertSendAndReceive(destination, request, null);
 	}
 
 	@Override
@@ -133,12 +132,12 @@ public abstract class AbstractMessagingTemplate implements MessageReceivingOpera
 	}
 
 	@Override
-	public Object convertSendAndReceive(String destinationName, Object request, MessagePostProcessor postProcessor) {
+	public Object convertSendAndReceive(D destination, Object request, MessagePostProcessor postProcessor) {
 		Message<?> requestMessage = this.converter.toMessage(request);
 		if (postProcessor != null) {
 			requestMessage = postProcessor.postProcessMessage(requestMessage);
 		}
-		Message<?> replyMessage = this.sendAndReceive(destinationName, requestMessage);
+		Message<?> replyMessage = this.sendAndReceive(destination, requestMessage);
 		return this.converter.fromMessage(replyMessage);
 	}
 

@@ -5,16 +5,16 @@ import org.springframework.integration.MessagingException;
 import org.springframework.integration.core.MessagePostProcessor;
 
 public interface ResolvableDestinationMessageReceivingOperations<D>
-		extends MessageReceivingOperations, ResolvableDestinationMessageSendingOperations<D> {
+		extends MessageReceivingOperations<D>, ResolvableDestinationMessageSendingOperations<D> {
 
-	<P> Message<P> receive(D destination) throws MessagingException;
+	<P> Message<P> receive(String destinationName) throws MessagingException;
 
-	Object receiveAndConvert(D destination) throws MessagingException;
+	Object receiveAndConvert(String destinationName) throws MessagingException;
 
-	Message<?> sendAndReceive(D destination, Message<?> requestMessage);
+	Message<?> sendAndReceive(String destinationName, Message<?> requestMessage);
 
-	Object convertSendAndReceive(D destination, Object request);
+	Object convertSendAndReceive(String destinationName, Object request);
 
-	Object convertSendAndReceive(D destination, Object request, MessagePostProcessor requestPostProcessor);
+	Object convertSendAndReceive(String destinationName, Object request, MessagePostProcessor requestPostProcessor);
 
 }
