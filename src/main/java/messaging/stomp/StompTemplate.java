@@ -4,7 +4,7 @@ import messaging.AbstractMessagingTemplate;
 
 import org.springframework.integration.Message;
 
-public class StompTemplate extends AbstractMessagingTemplate {
+public class StompTemplate extends AbstractMessagingTemplate<String> {
 
 	@Override
 	protected final void doSend(String destinationName, Message<?> message) {

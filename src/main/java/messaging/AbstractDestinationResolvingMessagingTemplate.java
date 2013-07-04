@@ -4,7 +4,8 @@ import org.springframework.integration.Message;
 import org.springframework.integration.core.MessagePostProcessor;
 import org.springframework.util.Assert;
 
-public abstract class AbstractDestinationResolvingMessagingTemplate<D> extends AbstractMessagingTemplate
+
+public abstract class AbstractDestinationResolvingMessagingTemplate<D> extends AbstractMessagingTemplate<D>
 		implements ResolvableDestinationMessageReceivingOperations<D> {
 
 	private volatile DestinationResolver<D> destinationResolver;
@@ -16,7 +17,7 @@ public abstract class AbstractDestinationResolvingMessagingTemplate<D> extends A
 
 
 	@Override
-	protected final void doSend(String destinationName, Message<?> message) {
+	public <P> void send(String destinationName, Message<P> message) {
 		D destination = resolveDestination(destinationName);
 		this.doSend(destination, message);
 	}
@@ -27,75 +28,44 @@ public abstract class AbstractDestinationResolvingMessagingTemplate<D> extends A
 	}
 
 	@Override
-	protected final <P> Message<P> doReceive(String destinationName) {
+	public <T> void convertAndSend(String destinationName, T message) {
+		this.convertAndSend(destinationName, message, null);
+	}
+
+	@Override
+	public <T> void convertAndSend(String destinationName, T message, MessagePostProcessor postProcessor) {
 		D destination = resolveDestination(destinationName);
-		return this.doReceive(destination);
+		super.convertAndSend(destination, message, postProcessor);
 	}
 
 	@Override
-	protected final <S, R> Message<R> doSendAndReceive(String destinationName, Message<S> requestMessage) {
+	public <P> Message<P> receive(String destinationName) {
 		D destination = resolveDestination(destinationName);
-		return this.doSendAndReceive(destination, requestMessage);
-	}
-
-
-	@Override
-	public <P> void send(D destination, Message<P> message) {
-		this.doSend(destination, message);
-	}
-
-	protected abstract void doSend(D destination, Message<?> message);
-
-	@Override
-	public <T> void convertAndSend(D destination, T object) {
-		this.convertAndSend(destination, object, null);
+		return super.receive(destination);
 	}
 
 	@Override
-	public <T> void convertAndSend(D destination, T object, MessagePostProcessor postProcessor) {
-		Message<?> message = this.converter.toMessage(object);
-		if (postProcessor != null) {
-			message = postProcessor.postProcessMessage(message);
-		}
-		this.send(destination, message);
-	}
-
-
-	@Override
-	public <P> Message<P> receive(D destination) {
-		return this.doReceive(destination);
-	}
-
-	protected abstract <P> Message<P> doReceive(D destination);
-
-
-	@Override
-	public Object receiveAndConvert(D destination) {
-		Message<?> message = this.doReceive(destination);
-		return (message != null) ? this.converter.fromMessage(message) : null;
+	public Object receiveAndConvert(String destinationName) {
+		D destination = resolveDestination(destinationName);
+		return super.receiveAndConvert(destination);
 	}
 
 	@Override
-	public Message<?> sendAndReceive(D destination, Message<?> requestMessage) {
-		return this.doSendAndReceive(destination, requestMessage);
-	}
-
-	protected abstract <S, R> Message<R> doSendAndReceive(D destination, Message<S> requestMessage);
-
-
-	@Override
-	public Object convertSendAndReceive(D destination, Object request) {
-		return this.convertSendAndReceive(destination, request, null);
+	public Message<?> sendAndReceive(String destinationName, Message<?> requestMessage) {
+		D destination = resolveDestination(destinationName);
+		return super.sendAndReceive(destination, requestMessage);
 	}
 
 	@Override
-	public Object convertSendAndReceive(D destination, Object request, MessagePostProcessor postProcessor) {
-		Message<?> requestMessage = this.converter.toMessage(request);
-		if (postProcessor != null) {
-			requestMessage = postProcessor.postProcessMessage(requestMessage);
-		}
-		Message<?> replyMessage = this.sendAndReceive(destination, requestMessage);
-		return this.converter.fromMessage(replyMessage);
+	public Object convertSendAndReceive(String destinationName, Object request) {
+		D destination = resolveDestination(destinationName);
+		return super.convertSendAndReceive(destination, request);
+	}
+
+	@Override
+	public Object convertSendAndReceive(String destinationName, Object request, MessagePostProcessor postProcessor) {
+		D destination = resolveDestination(destinationName);
+		return super.convertSendAndReceive(destination, request, postProcessor);
 	}
 
 }
